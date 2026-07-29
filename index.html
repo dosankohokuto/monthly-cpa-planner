@@ -937,7 +937,9 @@
         input.inputMode = suffix === "%" ? "decimal" : "numeric";
         input.value = Number.isFinite(value) ? String(Math.round(value * 100) / 100) : "0";
         input.addEventListener("change", () => onChange(parseFlexibleNumber(input.value)));
-        input.addEventListener("input", () => onChange(parseFlexibleNumber(input.value)));
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") input.blur();
+        });
         wrapper.append(input);
         if (suffix) {
           const suffixEl = document.createElement("span");
@@ -1042,7 +1044,10 @@
           const nameInput = document.createElement("input");
           nameInput.className = "name-input";
           nameInput.value = row.name;
-          nameInput.addEventListener("input", () => updateRow(row.id, { name: nameInput.value }));
+          nameInput.addEventListener("change", () => updateRow(row.id, { name: nameInput.value }));
+          nameInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") nameInput.blur();
+          });
           nameTd.append(nameInput);
           tr.append(nameTd);
 
@@ -1175,18 +1180,23 @@
         els.operatorSelect.addEventListener("change", () => selectOperator(els.operatorSelect.value));
         els.monthInput.addEventListener("change", () => selectMonth(els.monthInput.value));
         els.addOperator.addEventListener("click", addOperator);
-        els.calculatorCpc.addEventListener("input", () => {
+        els.calculatorCpc.addEventListener("change", () => {
           calculator = { ...calculator, cpc: parseFlexibleNumber(els.calculatorCpc.value) };
           render();
         });
-        els.calculatorCvr.addEventListener("input", () => {
+        els.calculatorCvr.addEventListener("change", () => {
           calculator = { ...calculator, cvr: parseFlexibleNumber(els.calculatorCvr.value) };
           render();
         });
-        els.calculatorMonthDays.addEventListener("input", () => {
+        els.calculatorMonthDays.addEventListener("change", () => {
           calculator = { ...calculator, monthDays: parseFlexibleNumber(els.calculatorMonthDays.value) };
           render();
         });
+        for (const input of [els.calculatorCpc, els.calculatorCvr, els.calculatorMonthDays]) {
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") input.blur();
+          });
+        }
       }
 
       bindElements();
