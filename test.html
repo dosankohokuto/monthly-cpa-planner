@@ -1,0 +1,1327 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>月次想定表シミュレーター テスト版</title>
+    <meta
+      name="description"
+      content="月次の案件別想定表とCPA計算を管理できるシミュレーター。"
+    />
+    <style>
+      :root {
+        --background: #f4f6f8;
+        --foreground: #141820;
+        --gold: #fff1bd;
+        --blue: #dcecfb;
+        --paper: #ffffff;
+        --ink-soft: #667085;
+        --navy: #10233f;
+        --green: #0f7a55;
+        --line: #d9dee7;
+        --danger: #b42318;
+        --warn: #ff9f0a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 1100px;
+        margin: 0;
+        background:
+          linear-gradient(180deg, #eef3f8 0, rgba(238, 243, 248, 0) 280px),
+          var(--background);
+        color: var(--foreground);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        min-height: 38px;
+        border: 1px solid #cfd6e1;
+        border-radius: 7px;
+        background: #ffffff;
+        color: var(--navy);
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+
+      button:hover {
+        border-color: #8d98a8;
+      }
+
+      button.primary {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: #ffffff;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .app-shell {
+        padding: 0 24px 32px;
+      }
+
+      .sticky-header {
+        background:
+          linear-gradient(180deg, rgba(244, 246, 248, 0.98), rgba(244, 246, 248, 0.9)),
+          var(--background);
+        border-bottom: 1px solid rgba(217, 222, 231, 0.9);
+        margin: 0 -24px 14px;
+        padding: 18px 24px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      .topbar {
+        align-items: end;
+        display: flex;
+        gap: 24px;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .eyebrow {
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0;
+        margin: 0 0 6px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: 30px;
+        line-height: 1.18;
+        margin: 0;
+      }
+
+      .lead {
+        color: var(--ink-soft);
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.6;
+        margin: 8px 0 0;
+      }
+
+      .test-badge {
+        background: #e8f2ff;
+        border: 1px solid #b9d4f4;
+        border-radius: 999px;
+        color: #15549c;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 900;
+        margin-left: 8px;
+        padding: 4px 10px;
+        vertical-align: middle;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .save-button {
+        color: #ffffff;
+        min-width: 88px;
+        transition:
+          background-color 0.18s ease,
+          border-color 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+
+      .save-button.unsaved {
+        background: #ff9f0a;
+        border-color: #ff9f0a;
+        box-shadow: 0 8px 18px rgba(255, 159, 10, 0.24);
+      }
+
+      .save-button.saved {
+        background: #1a63b7;
+        border-color: #1a63b7;
+        box-shadow: 0 8px 18px rgba(26, 99, 183, 0.18);
+      }
+
+      .operator-toolbar {
+        align-items: end;
+        background: #ffffff;
+        border: 1px solid #d9dee7;
+        border-radius: 8px;
+        box-shadow: 0 10px 24px rgba(20, 24, 32, 0.04);
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 220px 160px 240px auto minmax(220px, 1fr);
+        margin-bottom: 0;
+        padding: 12px;
+      }
+
+      .operator-toolbar label {
+        display: grid;
+        gap: 6px;
+      }
+
+      .operator-toolbar span {
+        color: var(--ink-soft);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .operator-toolbar input,
+      .operator-toolbar select {
+        background: #f8fafc;
+        border: 1px solid #cfd6e1;
+        color: #15171c;
+        font-weight: 800;
+        min-height: 38px;
+        padding: 0 10px;
+      }
+
+      .operator-toolbar p {
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0;
+        padding-bottom: 10px;
+        text-align: right;
+      }
+
+      .save-status {
+        align-items: center;
+        background: #eef4ff;
+        border: 1px solid #b8c7e6;
+        border-radius: 999px;
+        color: #1a4f9f;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+        min-height: 30px;
+        padding: 0 12px;
+      }
+
+      .save-status::before {
+        background: currentColor;
+        border-radius: 999px;
+        content: "";
+        height: 8px;
+        width: 8px;
+      }
+
+      .save-status.unsaved {
+        background: #fff4df;
+        border-color: #ffd59a;
+        color: #a86200;
+      }
+
+      .metric-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        margin-bottom: 14px;
+      }
+
+      .metric-card {
+        background: #ffffff;
+        border: 1px solid #d9dee7;
+        border-radius: 8px;
+        box-shadow: 0 10px 24px rgba(20, 24, 32, 0.05);
+        min-height: 86px;
+        padding: 16px 18px;
+      }
+
+      .metric-card.total-metric {
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
+        border-color: #cfd8e6;
+      }
+
+      .metric-grid span,
+      .totals span,
+      .panel-head span {
+        color: var(--ink-soft);
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .metric-grid strong {
+        display: block;
+        font-size: 23px;
+        line-height: 1.15;
+        margin-top: 10px;
+      }
+
+      .workspace {
+        align-items: start;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 300px minmax(900px, 1fr);
+      }
+
+      .control-panel {
+        background: var(--paper);
+        border: 1px solid #d9dee7;
+        border-radius: 8px;
+        box-shadow: 0 14px 34px rgba(20, 24, 32, 0.06);
+        padding: 16px;
+        position: sticky;
+        top: 16px;
+      }
+
+      .panel-head {
+        border-bottom: 1px solid #e6eaf0;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+      }
+
+      .panel-head p {
+        font-size: 18px;
+        font-weight: 800;
+        margin: 0 0 4px;
+      }
+
+      .calculator-card {
+        display: grid;
+        gap: 12px;
+      }
+
+      .calculator-card label {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin: 0;
+      }
+
+      .calculator-card label > span {
+        color: #20242c;
+        font-size: 13px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .formula-box {
+        background: #f6faf8;
+        border: 1px solid #cce8da;
+        border-radius: 8px;
+        display: grid;
+        gap: 8px;
+        margin-bottom: 4px;
+        padding: 10px;
+      }
+
+      .formula-box div {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .formula-box span {
+        color: var(--ink-soft);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .formula-box strong {
+        color: var(--green);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .daily-formula {
+        background: #f8fafc;
+        border-color: #d9dee7;
+      }
+
+      .calculator-results div {
+        background: linear-gradient(180deg, #ffffff, #f0fbf6);
+        border: 1px solid #b7dccb;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .calculator-results span {
+        color: var(--ink-soft);
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .calculator-results strong {
+        color: var(--green);
+        display: block;
+        font-size: 24px;
+        line-height: 1.15;
+        margin-top: 6px;
+      }
+
+      .totals {
+        border-top: 1px solid #e6eaf0;
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+        padding-top: 16px;
+      }
+
+      .totals div {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .totals strong {
+        font-size: 15px;
+      }
+
+      .storage-note {
+        color: #667085;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.6;
+        margin: 14px 0 0;
+      }
+
+      .table-wrap {
+        background: #ffffff;
+        border: 1px solid #cdd5df;
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(20, 24, 32, 0.08);
+        max-width: calc(100vw - 362px);
+        overflow: auto;
+      }
+
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 14px;
+        min-width: 1720px;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e1e4e8;
+        border-right: 1px solid #e1e4e8;
+        height: 44px;
+        padding: 6px 8px;
+        text-align: right;
+        vertical-align: middle;
+      }
+
+      th {
+        border-bottom: 2px solid #1f2937;
+        color: #111827;
+        font-weight: 900;
+        position: sticky;
+        text-align: center;
+        top: 150px;
+        z-index: 3;
+      }
+
+      th.gold {
+        background: var(--gold);
+      }
+
+      th.blue {
+        background: var(--blue);
+      }
+
+      th.wide {
+        min-width: 250px;
+      }
+
+      tbody td:nth-child(1),
+      tbody td:nth-child(2) {
+        text-align: center;
+      }
+
+      tbody td:nth-child(3) {
+        text-align: left;
+      }
+
+      th:nth-child(1),
+      td:nth-child(1) {
+        left: 0;
+        min-width: 102px;
+        position: sticky;
+        z-index: 4;
+      }
+
+      th:nth-child(2),
+      td:nth-child(2) {
+        left: 102px;
+        min-width: 102px;
+        position: sticky;
+        z-index: 4;
+      }
+
+      th:nth-child(3),
+      td:nth-child(3) {
+        left: 204px;
+        min-width: 260px;
+        position: sticky;
+        z-index: 4;
+      }
+
+      th:nth-child(-n + 3) {
+        z-index: 8;
+      }
+
+      td:nth-child(-n + 3) {
+        background: #ffffff;
+        box-shadow: 1px 0 0 #e1e4e8;
+      }
+
+      tbody td:nth-child(9),
+      tbody td:nth-child(10) {
+        background: #fff9e8;
+      }
+
+      tbody td:nth-child(n + 10) {
+        background: #fff6dd;
+      }
+
+      .read {
+        background: #f8fafc;
+        font-weight: 700;
+      }
+
+      .actual {
+        font-weight: 800;
+      }
+
+      .action-cell {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        min-width: 118px;
+        text-align: center;
+      }
+
+      .drag-handle {
+        background: #eef4ff;
+        border-color: #b8c7e6;
+        color: #1a4f9f;
+        cursor: grab;
+        font-size: 12px;
+        min-height: 30px;
+        padding: 0 10px;
+      }
+
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+
+      .dragging-row td {
+        opacity: 0.55;
+      }
+
+      .delete-row {
+        background: #fff1f0;
+        border-color: #f0b4ad;
+        color: #9f1d14;
+        font-size: 12px;
+        min-height: 30px;
+        padding: 0 10px;
+      }
+
+      .name-input,
+      .number-field input,
+      select {
+        border: 1px solid transparent;
+        border-radius: 7px;
+        height: 31px;
+        outline: none;
+      }
+
+      .name-input:focus,
+      .number-field input:focus,
+      select:focus {
+        border-color: #245caa;
+        box-shadow: 0 0 0 3px rgba(36, 92, 170, 0.16);
+      }
+
+      .name-input {
+        background: transparent;
+        color: #15171c;
+        font-weight: 700;
+        min-width: 230px;
+        padding: 0 8px;
+        width: 100%;
+      }
+
+      .number-field {
+        align-items: center;
+        display: inline-flex;
+        justify-content: end;
+        min-width: 92px;
+        width: 100%;
+      }
+
+      .number-field input {
+        background: transparent;
+        color: #15171c;
+        font-weight: 700;
+        padding: 0 7px;
+        text-align: right;
+        width: 92px;
+      }
+
+      td:hover .name-input,
+      td:hover .number-field input,
+      .name-input:focus,
+      .number-field input:focus {
+        background: #fff8df;
+      }
+
+      .number-field span {
+        color: #4b5563;
+        font-size: 12px;
+        font-weight: 800;
+        margin-left: 3px;
+      }
+
+      .pill,
+      .priority {
+        appearance: none;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 900;
+        min-width: 78px;
+        padding: 0 28px 0 10px;
+        text-align: center;
+      }
+
+      .media-meta {
+        background: #1a63b7;
+      }
+
+      .media-lap {
+        background: #11824e;
+      }
+
+      .media-google {
+        background: #596170;
+      }
+
+      .media-tiktok {
+        background: #111827;
+      }
+
+      .priority-high {
+        background: #b42318;
+      }
+
+      .priority-mid {
+        background: #ffe7a3;
+        color: #3e3213;
+      }
+
+      .priority-low {
+        background: #d9dee5;
+        color: #20242c;
+      }
+
+      @media (max-width: 900px) {
+        body {
+          min-width: 0;
+        }
+
+        .app-shell {
+          padding: 0 16px 16px;
+        }
+
+        .sticky-header {
+          margin: 0 -16px 14px;
+          padding: 14px 16px;
+        }
+
+        .topbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .actions {
+          flex-wrap: wrap;
+        }
+
+        .operator-toolbar {
+          align-items: stretch;
+          grid-template-columns: 1fr;
+        }
+
+        .operator-toolbar p {
+          padding-bottom: 0;
+          text-align: left;
+        }
+
+        .metric-grid,
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .control-panel {
+          position: static;
+        }
+
+        .table-wrap {
+          max-width: calc(100vw - 32px);
+        }
+
+        th {
+          top: 0;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1),
+        th:nth-child(2),
+        td:nth-child(2),
+        th:nth-child(3),
+        td:nth-child(3) {
+          left: auto;
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <div class="sticky-header">
+        <section class="topbar">
+          <div>
+            <p class="eyebrow">CPA Planning</p>
+            <h1>月次想定表シミュレーター<span class="test-badge">UIテスト版</span></h1>
+            <p class="lead">
+              月次の想定表を管理しながら、別枠の計算ツールでCPC・CVRからCPAを確認できます。
+            </p>
+          </div>
+          <div class="actions">
+            <span id="saveStatus" class="save-status">保存済み</span>
+            <button type="button" id="addRow">行を追加</button>
+            <button type="button" id="resetRows">初期値に戻す</button>
+            <button type="button" id="saveButton" class="save-button saved">保存済み</button>
+            <button type="button" id="exportCsv" class="primary">CSV出力</button>
+          </div>
+        </section>
+
+        <section class="operator-toolbar" aria-label="運用者切り替え">
+          <label>
+            <span>運用者</span>
+            <select id="operatorSelect"></select>
+          </label>
+          <label>
+            <span>対象月</span>
+            <input id="monthInput" type="month" />
+          </label>
+          <label>
+            <span>新規運用者</span>
+            <input id="newOperatorName" placeholder="例：佐藤さん" />
+          </label>
+          <button type="button" id="addOperator">追加</button>
+          <p id="statusMessage">読み込み中...</p>
+        </section>
+      </div>
+
+      <section class="metric-grid" aria-label="中央値と合計">
+        <article class="metric-card">
+          <span>現在利益</span>
+          <strong id="actualProfitTotal">¥0</strong>
+        </article>
+        <article class="metric-card total-metric">
+          <span>想定売上合計</span>
+          <strong id="salesTotal">¥0</strong>
+        </article>
+        <article class="metric-card total-metric">
+          <span>想定利益合計</span>
+          <strong id="profitTotal">¥0</strong>
+        </article>
+        <article class="metric-card total-metric">
+          <span>売上のDAY数字</span>
+          <strong id="salesDaily">¥0</strong>
+        </article>
+        <article class="metric-card total-metric">
+          <span>利益のDAY数字</span>
+          <strong id="profitDaily">¥0</strong>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <aside class="control-panel" aria-label="全体調整">
+          <div class="panel-head">
+            <p>CPA計算ツール</p>
+            <span>CPC・CVRからCPAを算出</span>
+          </div>
+
+          <div class="calculator-card">
+            <label>
+              <span>CPC</span>
+              <span class="number-field"><input id="calculatorCpc" inputmode="numeric" /></span>
+            </label>
+            <label>
+              <span>CVR</span>
+              <span class="number-field"><input id="calculatorCvr" inputmode="decimal" /><span>%</span></span>
+            </label>
+            <label>
+              <span>月の日数</span>
+              <span class="number-field"><input id="calculatorMonthDays" inputmode="numeric" /></span>
+            </label>
+            <div class="formula-box">
+              <div><span>CPA</span><strong>CPC ÷ CVR</strong></div>
+            </div>
+            <div class="formula-box daily-formula">
+              <div><span>DAY金額</span><strong>月合計 ÷ 月の日数</strong></div>
+              <div><span>DAY必要件数</span><strong>想定件数 ÷ 月の日数</strong></div>
+            </div>
+            <div class="calculator-results">
+              <div>
+                <span>CPA</span>
+                <strong id="calculatedCpa">¥0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="totals">
+            <div><span>想定件数</span><strong id="ordersTotal">0</strong></div>
+            <div><span>実績件数</span><strong id="actualOrdersTotal">0</strong></div>
+          </div>
+          <p class="storage-note">
+            この公開版の保存内容は、開いているブラウザ内に保存されます。
+          </p>
+        </aside>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="gold">媒体</th>
+                <th class="gold">注力度</th>
+                <th class="gold wide">案件名</th>
+                <th class="gold">単価</th>
+                <th class="gold">想定件数</th>
+                <th class="gold">想定売上</th>
+                <th class="gold">想定利益</th>
+                <th class="gold">想定ROAS</th>
+                <th class="gold">目標CPA</th>
+                <th class="blue">件数</th>
+                <th class="blue">利益</th>
+                <th class="blue">CPA</th>
+                <th class="blue">ROAS</th>
+                <th class="blue">DAY必要件数</th>
+                <th class="blue">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "monthly-cpa-planner-public-v1";
+      const initialRows = [
+        { id: 1, media: "Meta", priority: "高", name: "案件A", unitPrice: 10000, expectedOrders: 100, targetRoas: 1.5, targetCpa: 6667, actualOrders: 0 },
+        { id: 2, media: "LAP", priority: "高", name: "案件B", unitPrice: 20000, expectedOrders: 80, targetRoas: 1.4, targetCpa: 14286, actualOrders: 0 },
+        { id: 3, media: "Google", priority: "中", name: "案件C", unitPrice: 15000, expectedOrders: 60, targetRoas: 1.3, targetCpa: 11538, actualOrders: 0 },
+        { id: 4, media: "TikTok", priority: "中", name: "案件D", unitPrice: 12000, expectedOrders: 50, targetRoas: 1.2, targetCpa: 10000, actualOrders: 0 },
+      ];
+      const initialCalculator = { cpc: 500, cvr: 3, monthDays: 30 };
+      const yen = new Intl.NumberFormat("ja-JP", { style: "currency", currency: "JPY", maximumFractionDigits: 0 });
+      const numberFormat = new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 0 });
+      const els = {};
+      let rows = structuredClone(initialRows);
+      let calculator = { ...initialCalculator };
+      let operators = [];
+      let selectedOperatorId = "";
+      let selectedMonth = currentMonthKey();
+      let savedSignature = "";
+      let draggedRowId = null;
+
+      function currentMonthKey() {
+        return new Date().toISOString().slice(0, 7);
+      }
+
+      function normalizeNumericText(value) {
+        return String(value)
+          .replace(/[０-９]/g, (character) => String.fromCharCode(character.charCodeAt(0) - 0xfee0))
+          .replace(/[．。]/g, ".")
+          .replace(/[，、]/g, ",");
+      }
+
+      function parseFlexibleNumber(value) {
+        const normalized = normalizeNumericText(value).replace(/[^\d.]/g, "");
+        const firstDot = normalized.indexOf(".");
+        const cleaned =
+          firstDot === -1
+            ? normalized
+            : `${normalized.slice(0, firstDot + 1)}${normalized.slice(firstDot + 1).replaceAll(".", "")}`;
+        const parsed = Number(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function calc(row) {
+        const targetCpa = row.targetRoas > 0 ? row.unitPrice / row.targetRoas : 0;
+        const expectedSales = row.unitPrice * row.expectedOrders;
+        const expectedAdCost = targetCpa * row.expectedOrders;
+        const expectedProfit = expectedSales - expectedAdCost;
+        const actualProfit = row.actualOrders * row.unitPrice * 0.2;
+        return { targetCpa, expectedSales, expectedProfit, actualProfit };
+      }
+
+      function defaultPayload() {
+        return {
+          selectedMonth,
+          months: {
+            [selectedMonth]: {
+              rows: structuredClone(initialRows),
+              calculator: { ...initialCalculator },
+            },
+          },
+        };
+      }
+
+      function loadState() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+          operators = stored?.operators?.length
+            ? stored.operators
+            : [{ id: crypto.randomUUID(), name: "運用者A", ...defaultPayload() }];
+          selectedOperatorId = stored?.selectedOperatorId || operators[0].id;
+          const selected = operators.find((operator) => operator.id === selectedOperatorId) || operators[0];
+          applyOperator(selected, selected.selectedMonth || selectedMonth);
+          setStatus("読み込み完了");
+        } catch {
+          operators = [{ id: crypto.randomUUID(), name: "運用者A", ...defaultPayload() }];
+          selectedOperatorId = operators[0].id;
+          applyOperator(operators[0], selectedMonth);
+          setStatus("初期データを表示中");
+        }
+      }
+
+      function persistState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ operators, selectedOperatorId }));
+      }
+
+      function snapshotSignature(nextRows = rows, nextCalculator = calculator) {
+        return JSON.stringify({ rows: nextRows, calculator: nextCalculator });
+      }
+
+      function getSnapshot(operator, month) {
+        return operator.months?.[month] || {
+          rows: structuredClone(initialRows),
+          calculator: { ...initialCalculator },
+        };
+      }
+
+      function withCurrentSnapshot(operator) {
+        return {
+          ...operator,
+          selectedMonth,
+          months: {
+            ...operator.months,
+            [selectedMonth]: {
+              rows: structuredClone(rows),
+              calculator: { ...calculator },
+            },
+          },
+        };
+      }
+
+      function applyOperator(operator, month) {
+        const snapshot = getSnapshot(operator, month);
+        selectedOperatorId = operator.id;
+        selectedMonth = month;
+        rows = structuredClone(snapshot.rows?.length ? snapshot.rows : initialRows);
+        calculator = { ...initialCalculator, ...snapshot.calculator };
+        savedSignature = snapshotSignature();
+        render();
+      }
+
+      function setStatus(message) {
+        els.statusMessage.textContent = message;
+      }
+
+      function updateUnsavedState() {
+        const hasUnsavedChanges = savedSignature !== snapshotSignature();
+        els.saveButton.className = `save-button ${hasUnsavedChanges ? "unsaved" : "saved"}`;
+        els.saveButton.textContent = hasUnsavedChanges ? "更新" : "保存済み";
+        els.saveStatus.className = `save-status ${hasUnsavedChanges ? "unsaved" : "saved"}`;
+        els.saveStatus.textContent = hasUnsavedChanges ? "未保存の変更あり" : "保存済み";
+      }
+
+      function saveCurrent() {
+        const operator = operators.find((item) => item.id === selectedOperatorId);
+        if (!operator) return;
+        const saved = withCurrentSnapshot(operator);
+        operators = operators.map((item) => (item.id === saved.id ? saved : item));
+        persistState();
+        savedSignature = snapshotSignature();
+        setStatus("保存しました");
+        render();
+      }
+
+      function updateRow(id, patch) {
+        rows = rows.map((row) => (row.id === id ? { ...row, ...patch } : row));
+        render();
+      }
+
+      function addRow() {
+        const id = Math.max(...rows.map((row) => row.id), 0) + 1;
+        rows = [
+          ...rows,
+          { id, media: "Meta", priority: "中", name: "新規案件", unitPrice: 10000, expectedOrders: 100, targetRoas: 1.3, targetCpa: 10000, actualOrders: 0 },
+        ];
+        render();
+      }
+
+      function deleteRow(id) {
+        rows = rows.filter((row) => row.id !== id);
+        setStatus("行を削除しました。保存すると反映されます。");
+        render();
+      }
+
+      function moveRow(draggedId, targetId) {
+        if (draggedId === targetId) return;
+        const fromIndex = rows.findIndex((row) => row.id === draggedId);
+        const toIndex = rows.findIndex((row) => row.id === targetId);
+        if (fromIndex === -1 || toIndex === -1) return;
+        const next = [...rows];
+        const [movedRow] = next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, movedRow);
+        rows = next;
+        setStatus("行を並び替えました。保存すると反映されます。");
+        render();
+      }
+
+      function addOperator() {
+        const name = els.newOperatorName.value.trim();
+        if (!name) {
+          setStatus("運用者名を入力してください。");
+          return;
+        }
+        const currentOperator = operators.find((item) => item.id === selectedOperatorId);
+        if (currentOperator) {
+          operators = operators.map((item) => (item.id === currentOperator.id ? withCurrentSnapshot(item) : item));
+        }
+        const operator = { id: crypto.randomUUID(), name, ...defaultPayload() };
+        operators = [...operators, operator];
+        els.newOperatorName.value = "";
+        applyOperator(operator, selectedMonth);
+        persistState();
+        setStatus(`${name}を追加しました`);
+      }
+
+      function selectOperator(id) {
+        const currentOperator = operators.find((item) => item.id === selectedOperatorId);
+        if (currentOperator) {
+          operators = operators.map((item) => (item.id === currentOperator.id ? withCurrentSnapshot(item) : item));
+        }
+        const operator = operators.find((item) => item.id === id);
+        if (operator) {
+          applyOperator(operator, operator.selectedMonth || selectedMonth);
+          persistState();
+          setStatus(`${operator.name}を表示中`);
+        }
+      }
+
+      function selectMonth(month) {
+        if (!month) return;
+        const currentOperator = operators.find((item) => item.id === selectedOperatorId);
+        if (currentOperator) {
+          operators = operators.map((item) => (item.id === currentOperator.id ? withCurrentSnapshot(item) : item));
+          const operator = operators.find((item) => item.id === selectedOperatorId);
+          applyOperator(operator, month);
+          persistState();
+          setStatus(`${month}を表示中`);
+        }
+      }
+
+      function createNumberInput(value, onChange, suffix = "") {
+        const wrapper = document.createElement("span");
+        wrapper.className = "number-field";
+        const input = document.createElement("input");
+        input.inputMode = suffix === "%" ? "decimal" : "numeric";
+        input.value = Number.isFinite(value) ? String(Math.round(value * 100) / 100) : "0";
+        input.addEventListener("change", () => onChange(parseFlexibleNumber(input.value)));
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") input.blur();
+        });
+        wrapper.append(input);
+        if (suffix) {
+          const suffixEl = document.createElement("span");
+          suffixEl.textContent = suffix;
+          wrapper.append(suffixEl);
+        }
+        return wrapper;
+      }
+
+      function createSelect(value, options, className, onChange) {
+        const select = document.createElement("select");
+        select.className = className;
+        for (const optionValue of options) {
+          const option = document.createElement("option");
+          option.textContent = optionValue;
+          option.value = optionValue;
+          select.append(option);
+        }
+        select.value = value;
+        select.addEventListener("change", () => onChange(select.value));
+        return select;
+      }
+
+      function exportCsv() {
+        const monthDays = Math.max(calculator.monthDays, 1);
+        const header = ["媒体", "注力度", "案件名", "単価", "想定件数", "想定売上", "想定利益", "想定ROAS", "目標CPA", "件数", "利益", "CPA", "ROAS", "DAY必要件数"];
+        const body = rows.map((row) => {
+          const values = calc(row);
+          return [
+            row.media,
+            row.priority,
+            row.name,
+            row.unitPrice,
+            row.expectedOrders,
+            Math.round(values.expectedSales),
+            Math.round(values.expectedProfit),
+            `${Math.round(row.targetRoas * 100)}%`,
+            Math.round(values.targetCpa),
+            row.actualOrders,
+            Math.round(values.actualProfit),
+            "",
+            "",
+            (row.expectedOrders / monthDays).toFixed(1),
+          ];
+        });
+        const csv = [header, ...body].map((line) => line.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+        const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "monthly-cpa-simulation.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function renderOperatorControls() {
+        els.operatorSelect.innerHTML = "";
+        for (const operator of operators) {
+          const option = document.createElement("option");
+          option.value = operator.id;
+          option.textContent = operator.name;
+          els.operatorSelect.append(option);
+        }
+        els.operatorSelect.value = selectedOperatorId;
+        els.monthInput.value = selectedMonth;
+      }
+
+      function renderCalculatorControls() {
+        els.calculatorCpc.value = calculator.cpc;
+        els.calculatorCvr.value = calculator.cvr;
+        els.calculatorMonthDays.value = calculator.monthDays;
+      }
+
+      function renderTable() {
+        const monthDays = Math.max(calculator.monthDays, 1);
+        els.tableBody.innerHTML = "";
+        rows.forEach((row) => {
+          const values = calc(row);
+          const tr = document.createElement("tr");
+          if (draggedRowId === row.id) tr.className = "dragging-row";
+          tr.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+          });
+          tr.addEventListener("drop", (event) => {
+            event.preventDefault();
+            const droppedRowId = Number(event.dataTransfer.getData("text/plain")) || draggedRowId;
+            if (droppedRowId !== null) moveRow(droppedRowId, row.id);
+            draggedRowId = null;
+          });
+
+          const mediaTd = document.createElement("td");
+          mediaTd.append(createSelect(row.media, ["Meta", "LAP", "Google", "TikTok"], `pill media-${row.media.toLowerCase()}`, (value) => updateRow(row.id, { media: value })));
+          tr.append(mediaTd);
+
+          const priorityClass = row.priority === "高" ? "high" : row.priority === "中" ? "mid" : "low";
+          const priorityTd = document.createElement("td");
+          priorityTd.append(createSelect(row.priority, ["高", "中", "低"], `priority priority-${priorityClass}`, (value) => updateRow(row.id, { priority: value })));
+          tr.append(priorityTd);
+
+          const nameTd = document.createElement("td");
+          const nameInput = document.createElement("input");
+          nameInput.className = "name-input";
+          nameInput.value = row.name;
+          nameInput.addEventListener("change", () => updateRow(row.id, { name: nameInput.value }));
+          nameInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") nameInput.blur();
+          });
+          nameTd.append(nameInput);
+          tr.append(nameTd);
+
+          const unitTd = document.createElement("td");
+          unitTd.append(createNumberInput(row.unitPrice, (value) => updateRow(row.id, { unitPrice: value })));
+          tr.append(unitTd);
+
+          const expectedOrdersTd = document.createElement("td");
+          expectedOrdersTd.append(createNumberInput(row.expectedOrders, (value) => updateRow(row.id, { expectedOrders: value })));
+          tr.append(expectedOrdersTd);
+
+          for (const text of [yen.format(values.expectedSales), yen.format(values.expectedProfit)]) {
+            const td = document.createElement("td");
+            td.className = "read";
+            td.textContent = text;
+            tr.append(td);
+          }
+
+          const roasTd = document.createElement("td");
+          roasTd.append(createNumberInput(Math.round(row.targetRoas * 100), (value) => updateRow(row.id, { targetRoas: value / 100 }), "%"));
+          tr.append(roasTd);
+
+          const targetCpaTd = document.createElement("td");
+          targetCpaTd.className = "read";
+          targetCpaTd.textContent = yen.format(values.targetCpa);
+          tr.append(targetCpaTd);
+
+          const actualOrdersTd = document.createElement("td");
+          actualOrdersTd.append(createNumberInput(row.actualOrders, (value) => updateRow(row.id, { actualOrders: value })));
+          tr.append(actualOrdersTd);
+
+          for (const text of [yen.format(values.actualProfit), "-", "-", (row.expectedOrders / monthDays).toFixed(1)]) {
+            const td = document.createElement("td");
+            td.className = "actual";
+            td.textContent = text;
+            tr.append(td);
+          }
+
+          const actionTd = document.createElement("td");
+          actionTd.className = "actual action-cell";
+          const dragButton = document.createElement("button");
+          dragButton.type = "button";
+          dragButton.className = "drag-handle";
+          dragButton.draggable = true;
+          dragButton.textContent = "移動";
+          dragButton.title = "ドラッグで並び替え";
+          dragButton.addEventListener("dragstart", (event) => {
+            draggedRowId = row.id;
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", String(row.id));
+          });
+          dragButton.addEventListener("dragend", () => {
+            draggedRowId = null;
+            render();
+          });
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "delete-row";
+          deleteButton.textContent = "削除";
+          deleteButton.addEventListener("click", () => deleteRow(row.id));
+          actionTd.append(dragButton, deleteButton);
+          tr.append(actionTd);
+
+          els.tableBody.append(tr);
+        });
+      }
+
+      function renderTotals() {
+        const monthDays = Math.max(calculator.monthDays, 1);
+        const enriched = rows.map((row) => ({ row, values: calc(row) }));
+        const sales = enriched.reduce((sum, item) => sum + item.values.expectedSales, 0);
+        const profit = enriched.reduce((sum, item) => sum + item.values.expectedProfit, 0);
+        const actualProfit = enriched.reduce((sum, item) => sum + item.values.actualProfit, 0);
+        const orders = rows.reduce((sum, row) => sum + row.expectedOrders, 0);
+        const actualOrders = rows.reduce((sum, row) => sum + row.actualOrders, 0);
+        const cvr = Math.max(calculator.cvr / 100, 0.0001);
+        els.actualProfitTotal.textContent = yen.format(actualProfit);
+        els.salesTotal.textContent = yen.format(sales);
+        els.profitTotal.textContent = yen.format(profit);
+        els.salesDaily.textContent = yen.format(sales / monthDays);
+        els.profitDaily.textContent = yen.format(profit / monthDays);
+        els.ordersTotal.textContent = numberFormat.format(orders);
+        els.actualOrdersTotal.textContent = numberFormat.format(actualOrders);
+        els.calculatedCpa.textContent = yen.format(calculator.cpc / cvr);
+      }
+
+      function render() {
+        renderOperatorControls();
+        renderCalculatorControls();
+        renderTotals();
+        renderTable();
+        updateUnsavedState();
+      }
+
+      function bindElements() {
+        for (const id of [
+          "addRow",
+          "resetRows",
+          "saveButton",
+          "saveStatus",
+          "exportCsv",
+          "operatorSelect",
+          "monthInput",
+          "newOperatorName",
+          "addOperator",
+          "statusMessage",
+          "actualProfitTotal",
+          "salesTotal",
+          "profitTotal",
+          "salesDaily",
+          "profitDaily",
+          "calculatorCpc",
+          "calculatorCvr",
+          "calculatorMonthDays",
+          "calculatedCpa",
+          "ordersTotal",
+          "actualOrdersTotal",
+          "tableBody",
+        ]) {
+          els[id] = document.getElementById(id);
+        }
+
+        els.addRow.addEventListener("click", addRow);
+        els.resetRows.addEventListener("click", () => {
+          rows = structuredClone(initialRows);
+          setStatus("初期値に戻しました。保存すると反映されます。");
+          render();
+        });
+        els.saveButton.addEventListener("click", saveCurrent);
+        els.exportCsv.addEventListener("click", exportCsv);
+        els.operatorSelect.addEventListener("change", () => selectOperator(els.operatorSelect.value));
+        els.monthInput.addEventListener("change", () => selectMonth(els.monthInput.value));
+        els.addOperator.addEventListener("click", addOperator);
+        els.calculatorCpc.addEventListener("change", () => {
+          calculator = { ...calculator, cpc: parseFlexibleNumber(els.calculatorCpc.value) };
+          render();
+        });
+        els.calculatorCvr.addEventListener("change", () => {
+          calculator = { ...calculator, cvr: parseFlexibleNumber(els.calculatorCvr.value) };
+          render();
+        });
+        els.calculatorMonthDays.addEventListener("change", () => {
+          calculator = { ...calculator, monthDays: parseFlexibleNumber(els.calculatorMonthDays.value) };
+          render();
+        });
+        for (const input of [els.calculatorCpc, els.calculatorCvr, els.calculatorMonthDays]) {
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") input.blur();
+          });
+        }
+      }
+
+      bindElements();
+      loadState();
+    </script>
+  </body>
+</html>
