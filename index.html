@@ -950,13 +950,13 @@
       function createSelect(value, options, className, onChange) {
         const select = document.createElement("select");
         select.className = className;
-        select.value = value;
         for (const optionValue of options) {
           const option = document.createElement("option");
           option.textContent = optionValue;
           option.value = optionValue;
           select.append(option);
         }
+        select.value = value;
         select.addEventListener("change", () => onChange(select.value));
         return select;
       }
