@@ -208,6 +208,14 @@
         margin-top: 10px;
       }
 
+      .metric-date {
+        color: var(--ink-soft);
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 8px;
+      }
+
       .workspace {
         align-items: start;
         display: grid;
@@ -644,6 +652,7 @@
         <article class="metric-card total-metric">
           <span>利益のDAY数字</span>
           <strong id="profitDaily">¥0</strong>
+          <small class="metric-date" id="todayDate">今日: -</small>
         </article>
       </section>
 
@@ -762,6 +771,11 @@
         if (monthKey > todayMonthKey) return totalDays;
         if (monthKey < todayMonthKey) return 1;
         return Math.max(totalDays - today.getDate() + 1, 1);
+      }
+
+      function formatTodayLabel() {
+        const today = new Date();
+        return `${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
       }
 
       function normalizeNumericText(value) {
@@ -1174,6 +1188,7 @@
         els.profitTotal.textContent = yen.format(profit);
         els.salesDaily.textContent = yen.format(sales / monthDays);
         els.profitDaily.textContent = yen.format(remainingProfit / remainingDays);
+        els.todayDate.textContent = `今日: ${formatTodayLabel()}`;
         els.ordersTotal.textContent = numberFormat.format(orders);
         els.actualOrdersTotal.textContent = numberFormat.format(actualOrders);
         els.calculatedCpa.textContent = yen.format(calculator.cpc / cvr);
@@ -1203,6 +1218,7 @@
           "profitTotal",
           "salesDaily",
           "profitDaily",
+          "todayDate",
           "calculatorCpc",
           "calculatorCvr",
           "calculatorMonthDays",
