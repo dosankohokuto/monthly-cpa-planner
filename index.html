@@ -781,16 +781,20 @@
         return String(value)
           .replace(/[０-９]/g, (character) => String.fromCharCode(character.charCodeAt(0) - 0xfee0))
           .replace(/[．。]/g, ".")
-          .replace(/[，、]/g, ",");
+          .replace(/[，、]/g, ",")
+          .replace(/[−ー－]/g, "-");
       }
 
-      function parseFlexibleNumber(value) {
-        const normalized = normalizeNumericText(value).replace(/[^\d.]/g, "");
-        const firstDot = normalized.indexOf(".");
+      function parseFlexibleNumber(value, allowNegative = false) {
+        const normalized = normalizeNumericText(value);
+        const isNegative = allowNegative && normalized.trim().startsWith("-");
+        const numericText = normalized.replace(/[^\d.]/g, "");
+        const signedText = `${isNegative ? "-" : ""}${numericText}`;
+        const firstDot = signedText.indexOf(".");
         const cleaned =
           firstDot === -1
-            ? normalized
-            : `${normalized.slice(0, firstDot + 1)}${normalized.slice(firstDot + 1).replaceAll(".", "")}`;
+            ? signedText
+            : `${signedText.slice(0, firstDot + 1)}${signedText.slice(firstDot + 1).replaceAll(".", "")}`;
         const parsed = Number(cleaned);
         return Number.isFinite(parsed) ? parsed : 0;
       }
@@ -977,13 +981,13 @@
         }
       }
 
-      function createNumberInput(value, onChange, suffix = "") {
+      function createNumberInput(value, onChange, suffix = "", options = {}) {
         const wrapper = document.createElement("span");
         wrapper.className = "number-field";
         const input = document.createElement("input");
         input.inputMode = suffix === "%" ? "decimal" : "numeric";
         input.value = Number.isFinite(value) ? String(Math.round(value * 100) / 100) : "0";
-        input.addEventListener("change", () => onChange(parseFlexibleNumber(input.value)));
+        input.addEventListener("change", () => onChange(parseFlexibleNumber(input.value, options.allowNegative)));
         input.addEventListener("keydown", (event) => {
           if (event.key === "Enter") input.blur();
         });
@@ -1128,7 +1132,7 @@
 
           const actualProfitTd = document.createElement("td");
           actualProfitTd.className = "actual";
-          actualProfitTd.append(createNumberInput(values.actualProfit, (value) => updateRow(row.id, { actualProfit: value })));
+          actualProfitTd.append(createNumberInput(values.actualProfit, (value) => updateRow(row.id, { actualProfit: value }), "", { allowNegative: true }));
           tr.append(actualProfitTd);
 
           for (const text of [
