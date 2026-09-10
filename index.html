@@ -671,7 +671,8 @@
               <div><span>CPA</span><strong>CPC ÷ CVR</strong></div>
             </div>
             <div class="formula-box daily-formula">
-              <div><span>DAY金額</span><strong>月合計 ÷ 月の日数</strong></div>
+              <div><span>DAY金額</span><strong>売上は月合計 ÷ 月の日数</strong></div>
+              <div><span>利益のDAY数字</span><strong>残り利益 ÷ 残り日数</strong></div>
               <div><span>DAY必要件数</span><strong>想定件数 ÷ 月の日数</strong></div>
             </div>
             <div class="calculator-results">
@@ -738,8 +739,29 @@
       let savedSignature = "";
       let draggedRowId = null;
 
+      function formatMonthKey(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        return `${year}-${month}`;
+      }
+
       function currentMonthKey() {
-        return new Date().toISOString().slice(0, 7);
+        return formatMonthKey(new Date());
+      }
+
+      function daysInMonth(monthKey) {
+        const [year, month] = monthKey.split("-").map(Number);
+        if (!Number.isFinite(year) || !Number.isFinite(month)) return Math.max(calculator.monthDays, 1);
+        return new Date(year, month, 0).getDate();
+      }
+
+      function remainingDaysInMonth(monthKey) {
+        const today = new Date();
+        const todayMonthKey = formatMonthKey(today);
+        const totalDays = daysInMonth(monthKey);
+        if (monthKey > todayMonthKey) return totalDays;
+        if (monthKey < todayMonthKey) return 1;
+        return Math.max(totalDays - today.getDate() + 1, 1);
       }
 
       function normalizeNumericText(value) {
@@ -1145,11 +1167,13 @@
         const orders = rows.reduce((sum, row) => sum + row.expectedOrders, 0);
         const actualOrders = rows.reduce((sum, row) => sum + row.actualOrders, 0);
         const cvr = Math.max(calculator.cvr / 100, 0.0001);
+        const remainingProfit = Math.max(profit - actualProfit, 0);
+        const remainingDays = remainingDaysInMonth(selectedMonth);
         els.actualProfitTotal.textContent = yen.format(actualProfit);
         els.salesTotal.textContent = yen.format(sales);
         els.profitTotal.textContent = yen.format(profit);
         els.salesDaily.textContent = yen.format(sales / monthDays);
-        els.profitDaily.textContent = yen.format(profit / monthDays);
+        els.profitDaily.textContent = yen.format(remainingProfit / remainingDays);
         els.ordersTotal.textContent = numberFormat.format(orders);
         els.actualOrdersTotal.textContent = numberFormat.format(actualOrders);
         els.calculatedCpa.textContent = yen.format(calculator.cpc / cvr);
